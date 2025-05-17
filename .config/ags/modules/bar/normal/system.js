@@ -9,6 +9,7 @@ import { MaterialIcon } from '../../.commonwidgets/materialicon.js';
 import { AnimatedCircProg } from "../../.commonwidgets/cairo_circularprogress.js";
 import { WWO_CODE, WEATHER_SYMBOL, NIGHT_WEATHER_SYMBOL } from '../../.commondata/weather.js';
 import { setupCursorHover } from '../../.widgetutils/cursorhover.js';
+import PowerTempWidget from './powertemp.js';
 
 const WEATHER_CACHE_FOLDER = `${GLib.get_user_cache_dir()}/ags/weather`;
 Utils.exec(`mkdir -p ${WEATHER_CACHE_FOLDER}`);
@@ -232,6 +233,7 @@ export default () => Widget.EventBox({
         className: 'spacing-h-4',
         children: [
             BarGroup({ child: BarClock() }),
+            PowerTempWidget(),
             BatteryModule(),
         ]
     })

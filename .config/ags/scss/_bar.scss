@@ -199,6 +199,10 @@ $bar_ws_width_focus_active: 2.045rem;
     color: $ramOnLayer2;
 }
 
+.bar-ram-icon-hot {
+    color: $error;
+}
+
 .bar-ram-circprog {
     @include fluent_decel_long;
     min-width: 0.136rem; // line width
@@ -210,6 +214,10 @@ $bar_ws_width_focus_active: 2.045rem;
 
 .bar-ram-circprog-borderless {
     background-color: transparent;
+}
+
+.bar-ram-circprog-hot {
+    color: $error;
 }
 
 .bar-ram-txt {
@@ -225,6 +233,10 @@ $bar_ws_width_focus_active: 2.045rem;
     color: $swapOnLayer2;
 }
 
+.bar-swap-icon-hot {
+    color: $error;
+}
+
 .bar-swap-circprog {
     @include fluent_decel_long;
     min-width: 0.136rem; // line width
@@ -236,6 +248,10 @@ $bar_ws_width_focus_active: 2.045rem;
 
 .bar-swap-circprog-borderless {
     background-color: transparent;
+}
+
+.bar-swap-circprog-hot {
+    color: $error;
 }
 
 .bar-swap-txt {
