@@ -139,9 +139,9 @@
             "apis": {
                 "order": [
                     "gemini",
-                    "gpt",
-                    "waifu",
-                    "booru"
+                    "gpt"
+                    // "waifu",
+                    // "booru"
                 ],
                 "defaultPage": "gemini"
             }
@@ -196,7 +196,7 @@
         "enabled": false,
         "hiddenThickness": 5,
         "pinnedApps": [
-            "firefox",
+            "brave",
             "org.gnome.Nautilus"
         ],
         "layer": "top",
