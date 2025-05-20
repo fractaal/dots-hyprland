@@ -217,7 +217,6 @@ const PowerTempWidget = () => {
                                 className: 'spacing-h-10',
                                 children: [
                                     cpuTempWidget,
-                                    hasGpuTemp ? gpuTempWidget : null,
                                 ].filter(Boolean),
                             }),
                         ],
