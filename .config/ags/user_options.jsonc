@@ -18,9 +18,12 @@
     "sidebar": {
         "pages": {
             "apis": {
-                "defaultPage": "gpt"
+                "defaultPage": "gemini"
             },
             "defaultPage": "apis"
         }
+    },
+    "ai": {
+        "defaultGPTProvider": "openrouter"
     }
 }

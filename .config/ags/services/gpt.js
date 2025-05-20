@@ -35,14 +35,14 @@ const PROVIDERS = Object.assign({
         "model": "llama3.2",
     },
     "openrouter": {
-        "name": "OpenRouter (Llama-3-70B)",
-        "logo_name": "openrouter-symbolic",
+        "name": "OpenRouter (Gemini 2.5 Pro)",
+        "logo_name": "google-gemini-symbolic",
         "description": getString('A unified interface for LLMs'),
         "base_url": "https://openrouter.ai/api/v1/chat/completions",
         "key_get_url": "https://openrouter.ai/keys",
         "requires_key": true,
         "key_file": "openrouter_key.txt",
-        "model": "meta-llama/llama-3-70b-instruct",
+        "model": "google/gemini-2.5-pro-preview",
     },
     "openai": {
         "name": "OpenAI - GPT-3.5",
@@ -267,7 +267,7 @@ class GPTService extends Service {
                             aiResponse.done = true;
                             return;
                         }
-                        
+
                         // aiResponse.addDelta(result.choices[0].delta.content);
                         if (!result.choices[0].delta.content && result.choices[0].delta.reasoning_content) {
                             if (!aiResponse.hasReasoningContent) {
