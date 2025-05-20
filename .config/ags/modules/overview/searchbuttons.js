@@ -1,4 +1,4 @@
-const { Gtk } = imports.gi;
+const { Gtk, Gdk, GLib } = imports.gi;
 import App from 'resource:///com/github/Aylur/ags/app.js';
 import Widget from 'resource:///com/github/Aylur/ags/widget.js';
 import * as Utils from 'resource:///com/github/Aylur/ags/utils.js';
@@ -6,6 +6,9 @@ const { execAsync, exec } = Utils;
 import { searchItem } from './searchitem.js';
 import { execAndClose, couldBeMath, launchCustomCommand } from './miscfunctions.js';
 import GeminiService from '../../services/gemini.js';
+
+// For context menu positioning
+const Gravity = Gdk.Gravity;
 
 export const NoResultButton = () => searchItem({
     materialIconName: 'Error',
@@ -84,6 +87,53 @@ export const CalculationResultButton = ({ result, text }) => searchItem({
     },
 });
 
+// Function to find the desktop file location
+const findDesktopFileLocation = (app) => {
+    // Common locations for .desktop files
+    const desktopLocations = [
+        `${GLib.get_home_dir()}/.local/share/applications`,
+        '/usr/share/applications',
+        '/usr/local/share/applications',
+        '/var/lib/flatpak/exports/share/applications',
+        `${GLib.get_home_dir()}/.var/app/*/export/share/applications`
+    ];
+
+    // Try to get the desktop file path directly from the app object if available
+    if (app.desktopFile) {
+        return app.desktopFile;
+    }
+
+    // If not available, search in common locations
+    for (const location of desktopLocations) {
+        // Expand any glob patterns in the location
+        let paths = [];
+        try {
+            if (location.includes('*')) {
+                // Use glob expansion via shell
+                const result = exec(['bash', '-c', `ls -d ${location} 2>/dev/null`]);
+                if (result) {
+                    paths = result.split('\n').filter(p => p.trim() !== '');
+                }
+            } else {
+                paths = [location];
+            }
+
+            // Check each potential path
+            for (const path of paths) {
+                const desktopFilePath = `${path}/${app.id}`;
+                if (Utils.fileExists(desktopFilePath)) {
+                    return desktopFilePath;
+                }
+            }
+        } catch (error) {
+            console.error(`Error searching in ${location}: ${error}`);
+        }
+    }
+
+    // If we can't find it, return a default location with the app ID
+    return `/usr/share/applications/${app.id}`;
+};
+
 export const DesktopEntryButton = (app) => {
     const actionText = Widget.Revealer({
         revealChild: false,
@@ -105,6 +155,38 @@ export const DesktopEntryButton = (app) => {
         onClicked: () => {
             App.closeWindow('overview');
             app.launch();
+        },
+        onSecondaryClick: (button) => {
+            const desktopFilePath = findDesktopFileLocation(app);
+            const directoryPath = desktopFilePath.substring(0, desktopFilePath.lastIndexOf('/'));
+
+            const menu = Widget.Menu({
+                className: 'menu',
+                children: [
+                    Widget.MenuItem({
+                        child: Widget.Label({
+                            xalign: 0,
+                            label: "Open .desktop file location",
+                        }),
+                        onActivate: () => {
+                            App.closeWindow('overview');
+                            execAsync(['bash', '-c', `xdg-open '${directoryPath}' &`]).catch(print);
+                        },
+                    }),
+                    Widget.MenuItem({
+                        child: Widget.Label({
+                            xalign: 0,
+                            label: "Copy .desktop file path",
+                        }),
+                        onActivate: () => {
+                            execAsync(['wl-copy', desktopFilePath]).catch(print);
+                        },
+                    }),
+                ],
+            });
+
+            menu.popup_at_widget(button, Gravity.SOUTH, Gravity.NORTH, null);
+            button.connect("destroy", () => menu.destroy());
         },
         child: Widget.Box({
             children: [
@@ -129,11 +211,11 @@ export const DesktopEntryButton = (app) => {
             ]
         }),
         setup: (self) => self
-            .on('focus-in-event', (button) => {
+            .on('focus-in-event', () => {
                 actionText.revealChild = true;
                 actionTextRevealer.revealChild = true;
             })
-            .on('focus-out-event', (button) => {
+            .on('focus-out-event', () => {
                 actionText.revealChild = false;
                 actionTextRevealer.revealChild = false;
             })

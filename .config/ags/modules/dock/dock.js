@@ -1,4 +1,4 @@
-const { Gtk, GLib } = imports.gi;
+const { Gtk, GLib, Gdk } = imports.gi;
 import App from 'resource:///com/github/Aylur/ags/app.js';
 import Widget from 'resource:///com/github/Aylur/ags/widget.js';
 import * as Utils from 'resource:///com/github/Aylur/ags/utils.js';
@@ -12,6 +12,56 @@ import { setupCursorHover } from '../.widgetutils/cursorhover.js';
 import { getAllFiles, searchIcons } from './icons.js'
 import { MaterialIcon } from '../.commonwidgets/materialicon.js';
 import { substitute } from '../.miscutils/icons.js';
+
+// For context menu positioning
+const Gravity = Gdk.Gravity;
+
+// Function to find the desktop file location
+const findDesktopFileLocation = (app) => {
+    // Common locations for .desktop files
+    const desktopLocations = [
+        `${GLib.get_home_dir()}/.local/share/applications`,
+        '/usr/share/applications',
+        '/usr/local/share/applications',
+        '/var/lib/flatpak/exports/share/applications',
+        `${GLib.get_home_dir()}/.var/app/*/export/share/applications`
+    ];
+
+    // Try to get the desktop file path directly from the app object if available
+    if (app.desktopFile) {
+        return app.desktopFile;
+    }
+
+    // If not available, search in common locations
+    for (const location of desktopLocations) {
+        // Expand any glob patterns in the location
+        let paths = [];
+        try {
+            if (location.includes('*')) {
+                // Use glob expansion via shell
+                const result = exec(['bash', '-c', `ls -d ${location} 2>/dev/null`]);
+                if (result) {
+                    paths = result.split('\n').filter(p => p.trim() !== '');
+                }
+            } else {
+                paths = [location];
+            }
+
+            // Check each potential path
+            for (const path of paths) {
+                const desktopFilePath = `${path}/${app.id}`;
+                if (Utils.fileExists(desktopFilePath)) {
+                    return desktopFilePath;
+                }
+            }
+        } catch (error) {
+            console.error(`Error searching in ${location}: ${error}`);
+        }
+    }
+
+    // If we can't find it, return a default location with the app ID
+    return `/usr/share/applications/${app.id}`;
+};
 
 const icon_files = userOptions.icons.searchPaths.map(e => getAllFiles(e)).flat(1)
 
@@ -210,6 +260,37 @@ const PinnedApps = () => Widget.Box({
                     }
 
                     app.launch();
+                },
+                onSecondaryClick: (button) => {
+                    const desktopFilePath = findDesktopFileLocation(app);
+                    const directoryPath = desktopFilePath.substring(0, desktopFilePath.lastIndexOf('/'));
+
+                    const menu = Widget.Menu({
+                        className: 'menu',
+                        children: [
+                            Widget.MenuItem({
+                                child: Widget.Label({
+                                    xalign: 0,
+                                    label: "Open .desktop file location",
+                                }),
+                                onActivate: () => {
+                                    execAsync(['bash', '-c', `xdg-open '${directoryPath}' &`]).catch(print);
+                                },
+                            }),
+                            Widget.MenuItem({
+                                child: Widget.Label({
+                                    xalign: 0,
+                                    label: "Copy .desktop file path",
+                                }),
+                                onActivate: () => {
+                                    execAsync(['wl-copy', desktopFilePath]).catch(print);
+                                },
+                            }),
+                        ],
+                    });
+
+                    menu.popup_at_widget(button, Gravity.SOUTH, Gravity.NORTH, null);
+                    button.connect("destroy", () => menu.destroy());
                 },
                 onMiddleClick: () => app.launch(),
                 tooltipText: app.name,
